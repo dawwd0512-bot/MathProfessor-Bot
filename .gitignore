@@ -1,0 +1,58 @@
+__pycache__/
+*.pyc
+.env
+data/
+
+# Local backups
+*.backup
+*.bak
+*.before-*
+*.before_*
+*.SAFE_NOW
+*.safe_graph_checkpoint
+*.SUPER_MATH_*
+*.diff
+
+# Local runtime data
+memory/*.json
+workspace/*.json
+bot.log
+
+# Local tests / temporary files
+test.pdf
+test_camera.py
+test_shot.py
+test_veo.py
+ort
+
+# Local backups / experimental files
+*.backup*
+*.super_math*
+*.SAFE_*
+*.safe-*
+*.bak*
+*.before_*
+*.before-*
+
+# Local runtime / generated data
+*.zip
+core/memory/*.json
+core/rag/*.json
+memory/
+workspace/
+bot.log
+
+# Temporary accidental files
+test*.py
+test.pdf
+third_party/whisper.cpp/
+
+# Accidental shell garbage
+(
+-printf
+PY
+earch python-numpy
+tatus --short
+":\" && "
+
+":\" && "

@@ -1,0 +1,92 @@
+{
+  "domain": "Algebra",
+
+  "description": "قاعدة معرفة شاملة في علم الجبر من الأساسيات إلى الجبر الجامعي",
+
+  "history": {
+    "origin": "نشأ الجبر كعلم مستقل مع العالم محمد بن موسى الخوارزمي",
+    "founder": "Al-Khwarizmi",
+    "important_mathematicians": [
+      "Al-Khwarizmi",
+      "Diophantus",
+      "Euler",
+      "Gauss",
+      "Galois"
+    ]
+  },
+
+  "fundamentals": [
+
+    {
+      "name": "Variable",
+      "arabic": "المتغير",
+      "definition": "رمز يمثل قيمة مجهولة أو قابلة للتغير"
+    },
+
+    {
+      "name": "Equation",
+      "arabic": "المعادلة",
+      "definition": "مساواة بين تعبيرين رياضيين تحتوي على مجهول"
+    },
+
+    {
+      "name": "Polynomial",
+      "arabic": "كثير الحدود",
+      "definition": "تعبير جبري يتكون من حدود بأسس صحيحة غير سالبة"
+    }
+  ],
+
+  "topics": [
+
+    "Linear Equations",
+    "Quadratic Equations",
+    "Polynomial Algebra",
+    "Factorization",
+    "Inequalities",
+    "Functions",
+    "Sequences",
+    "Matrices",
+    "Abstract Algebra"
+  ],
+
+  "theorems": [
+
+    {
+      "name": "Fundamental Theorem of Algebra",
+
+      "arabic": "النظرية الأساسية في الجبر",
+
+      "statement": "كل كثيرة حدود غير ثابتة بدرجة n لها بالضبط n جذور في مجموعة الأعداد المركبة مع احتساب التكرار"
+    },
+
+    {
+      "name": "Quadratic Formula",
+
+      "arabic": "القانون العام للمعادلة التربيعية",
+
+      "formula": "x=(-b±√(b²-4ac))/(2a)",
+
+      "conditions": [
+        "a لا تساوي صفر"
+      ]
+    }
+  ],
+
+  "methods": [
+
+    "التجميع",
+    "التحليل إلى عوامل",
+    "التعويض",
+    "الحذف",
+    "المصفوفات",
+    "الاستقراء الرياضي"
+  ],
+
+  "rules": [
+    "حدد نوع المعادلة قبل الحل",
+    "اذكر القاعدة المستخدمة",
+    "تحقق من الحل بالتعويض",
+    "لا تتخطى الخطوات الجبرية المهمة",
+    "اشرح سبب كل تحويل رياضي"
+  ]
+}

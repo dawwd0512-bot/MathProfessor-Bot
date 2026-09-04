@@ -1,0 +1,63 @@
+{
+  "domain": "Calculus",
+  "description": "قاعدة معرفة شاملة في علم التفاضل والتكامل من الأساسيات إلى المستوى الجامعي",
+
+  "history": {
+    "origin": "تطور علم التفاضل والتكامل في القرن السابع عشر",
+    "founders": [
+      "Isaac Newton",
+      "Gottfried Wilhelm Leibniz"
+    ],
+    "important_mathematicians": [
+      "Euler",
+      "Cauchy",
+      "Riemann",
+      "Taylor"
+    ]
+  },
+
+  "fundamentals": [
+    {
+      "name": "Limit",
+      "arabic": "النهاية",
+      "definition": "دراسة سلوك الدالة عندما تقترب قيمة المتغير من نقطة معينة",
+      notation": "lim x→a f(x)"
+    },
+
+    {
+      "name": "Derivative",
+      "arabic": "المشتقة",
+      "definition": "معدل التغير اللحظي للدالة وميل المماس",
+      formula": "f'(x)=lim(h→0)((f(x+h)-f(x))/h)"
+    },
+
+    {
+      "name": "Integral",
+      "arabic": "التكامل",
+      "definition": "العملية العكسية للاشتقاق وحساب المساحات والتراكم",
+      formula": "∫f(x)dx"
+    }
+  ],
+
+  "theorems": [
+    {
+      "name": "Fundamental Theorem of Calculus",
+      "arabic": "النظرية الأساسية في التفاضل والتكامل",
+      "importance": "تربط بين الاشتقاق والتكامل"
+    },
+
+    {
+      "name": "Taylor Theorem",
+      "arabic": "مبرهنة تايلور",
+      "importance": "تقريب الدوال باستخدام المتسلسلات"
+    }
+  ],
+
+  "rules": [
+    "اشرح مفهوم النهاية قبل استخدام الاشتقاق",
+    "اذكر شروط وجود المشتقة",
+    "استخدم البرهان عند الطلب",
+    "لا تستخدم قانوناً بدون ذكر مصدره الرياضي",
+    "تحقق من النتيجة النهائية"
+  ]
+}

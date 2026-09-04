@@ -1,0 +1,116 @@
+{
+  "domain": "Geometry",
+
+  "description": "قاعدة معرفة في الهندسة من الهندسة الإقليدية إلى الهندسة التحليلية والفراغية",
+
+  "history": {
+    "origin": "من أقدم فروع الرياضيات",
+    "important_mathematicians": [
+      "Pythagoras",
+      "Euclid",
+      "Archimedes",
+      "Descartes",
+      "Gauss"
+    ],
+    "important_books": [
+      "Elements by Euclid"
+    ]
+  },
+
+  "foundations": [
+    {
+      "name": "Point",
+      "arabic": "النقطة",
+      "definition": "كيان هندسي ليس له طول أو عرض أو ارتفاع"
+    },
+
+    {
+      "name": "Line",
+      "arabic": "المستقيم",
+      "definition": "مجموعة نقاط تمتد بلا نهاية في اتجاهين"
+    },
+
+    {
+      "name": "Plane",
+      "arabic": "المستوى",
+      "definition": "سطح ثنائي الأبعاد يمتد بلا نهاية"
+    }
+  ],
+
+  "theorems": [
+
+    {
+      "name": "Pythagorean Theorem",
+      "arabic": "نظرية فيثاغورس",
+
+      "mathematician": "Pythagoras",
+
+      "statement": "في المثلث القائم مربع طول الوتر يساوي مجموع مربعي الضلعين القائمين",
+
+      "formula": "a^2 + b^2 = c^2",
+
+      "conditions": [
+        "المثلث قائم الزاوية",
+        "c هو الوتر",
+        "a و b هما الضلعان القائمان"
+      ],
+
+      "applications": [
+        "حساب الأطوال المجهولة",
+        "المسافة بين نقطتين",
+        "الهندسة التحليلية",
+        "الفيزياء",
+        "المثلثات"
+      ]
+    },
+
+    {
+      "name": "Triangle Angle Sum Theorem",
+
+      "arabic": "مجموع زوايا المثلث",
+
+      "formula": "A+B+C=180°",
+
+      "statement": "مجموع الزوايا الداخلية لأي مثلث يساوي 180 درجة"
+    },
+
+    {
+      "name": "Euclid Parallel Postulate",
+
+      "arabic": "مسلمة التوازي لإقليدس",
+
+      "statement": "من نقطة خارج مستقيم يمكن رسم مستقيم واحد فقط يوازيه"
+    },
+
+    {
+      "name": "Circle Theorems",
+
+      "arabic": "نظريات الدائرة",
+
+      "topics": [
+        "المماس",
+        "الأوتار",
+        "الأقواس",
+        "الزوايا المركزية",
+        "الزوايا المحيطية"
+      ]
+    }
+  ],
+
+  "branches": [
+    "Euclidean Geometry",
+    "Analytic Geometry",
+    "Coordinate Geometry",
+    "Solid Geometry",
+    "Non-Euclidean Geometry",
+    "Topology"
+  ],
+
+  "rules": [
+    "اذكر نوع الهندسة المستخدمة قبل الحل",
+    "حدد المعطيات والمطلوب",
+    "استخدم الرسم عند الحاجة",
+    "لا تستخدم نظرية بدون تحقق شروطها",
+    "قدم البرهان الكامل عند الطلب"
+  ]
+}
