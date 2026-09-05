@@ -23,6 +23,7 @@ from core.ai.math_engine import solve_math, format_result
 from core.memory.conversation import conversation_memory
 from core.memory.persistent import persistent_memory
 from core.files.manager import process_file
+from core.files.video_evidence import build_video_evidence
 from core.rag.rag_manager import RAGManager
 from core.rag.book_summary import summarize_book
 from core.rag.persistent import persistent_rag
@@ -42,7 +43,7 @@ load_dotenv()
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-BASE_DIR = Path.home() / "MathProfessor-Bot"
+BASE_DIR = Path.home() / "MathProfessor-Bot-broken"
 
 WHISPER_BIN = (
     BASE_DIR
@@ -2959,9 +2960,9 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
 
         await update.message.reply_text(
-            "🎥 تم استلام الفيديو.\n"
-            "⏳ سأستخرج الصوت منه ثم أحوله إلى نص.\n"
-            "هذا قد يستغرق وقتاً حسب طول المحاضرة."
+            "🎥 تم استلام الفيديو.\\n"
+            "⏳ جاري بناء ذاكرة ذكية للفيديو...\\n"
+            "🔊 الصوت + 📝 التفريغ + 🖼️ اللقطات + 🔎 OCR"
         )
 
         video = update.message.video
@@ -2988,7 +2989,7 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_text(
-            "🔊 جاري استخراج الصوت من الفيديو..."
+            "🔊 جاري استخراج الصوت..."
         )
 
         wav_file = (
@@ -3003,39 +3004,110 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_text(
-            "📝 الصوت جاهز.\n"
-            "🧠 جاري تفريغ المحاضرة باستخدام Whisper..."
+            "🧠 جاري بناء Video Evidence...\\n"
+            "Whisper + Frames + OCR + Timeline"
         )
 
-        transcript = await asyncio.to_thread(
-            transcribe_with_whisper,
-            wav_file
+        evidence_dir = (
+            DATA_DIR
+            / "video_evidence"
+            / f"{user_id}_{video.file_unique_id}"
         )
 
-        if not transcript:
+        evidence = await asyncio.to_thread(
+            build_video_evidence,
+            str(video_path),
+            str(wav_file),
+            str(evidence_dir),
+            12
+        )
+
+        transcript_segments = evidence.get("transcript", [])
+        timeline = evidence.get("timeline", [])
+
+        if not transcript_segments:
             await update.message.reply_text(
                 "❌ لم أستطع استخراج الكلام من الفيديو."
             )
             return
 
-        await update.message.reply_text(
-            "✅ تم تفريغ المحاضرة.\n"
-            "📚 جاري إعداد الملخص..."
+        transcript_text = "\\n".join(
+            f"[{float(seg.get('start', 0)):.2f}s → "
+            f"{float(seg.get('end', 0)):.2f}s] "
+            f"{seg.get('text', '')}"
+            for seg in transcript_segments
         )
 
-        prompt = (
-            "أنت أستاذ رياضيات.\n"
-            "لديك تفريغ لمحاضرة من فيديو.\n\n"
-            "قم بما يلي:\n"
-            "1. لخص المحاضرة.\n"
-            "2. استخرج أهم الأفكار.\n"
-            "3. استخرج القوانين والمعادلات.\n"
-            "4. اشرح المفاهيم المهمة ببساطة.\n"
-            "5. استخرج الأمثلة الرياضية إن وجدت.\n"
-            "6. إذا كان هناك أخطاء واضحة في التفريغ "
-            "فحاول تصحيحها اعتماداً على السياق.\n\n"
-            f"تفريغ المحاضرة:\n{transcript}"
+        timeline_parts = []
+
+        for item in timeline:
+            part = [
+                f"[{float(item['start']):.2f}s → "
+                f"{float(item['end']):.2f}s]",
+                f"الكلام: {item.get('text', '')}",
+            ]
+
+            for visual in item.get("visuals", []):
+                screen_text = (
+                    visual.get("screen_text") or ""
+                ).strip()
+
+                if screen_text:
+                    part.append(
+                        f"لقطة عند {float(visual['timestamp']):.2f}s: "
+                        f"{screen_text}"
+                    )
+                else:
+                    part.append(
+                        f"لقطة عند {float(visual['timestamp']):.2f}s"
+                    )
+
+            timeline_parts.append("\\n".join(part))
+
+        timeline_text = (
+            "\\n\\n".join(timeline_parts)
+            if timeline_parts
+            else "لا توجد بيانات بصرية مرتبطة بالتفريغ."
         )
+
+        await update.message.reply_text(
+            "🤖 جاري تحليل الأدلة وبناء ملخص المحاضرة..."
+        )
+
+        prompt = f"""
+أنت أستاذ رياضيات متخصص في تحليل المحاضرات المسجلة.
+
+لديك Evidence مستخرج مباشرة من فيديو تعليمي.
+
+مهمتك أن تجيب اعتماداً على الأدلة الموجودة فقط.
+
+قواعد صارمة:
+1. لا تخترع أي معلومة غير موجودة في الأدلة.
+2. إذا لم توجد المعلومة في الفيديو، قل بوضوح:
+   "هذه المعلومة غير موجودة في الأدلة المتاحة من الفيديو."
+3. لا تعتبر التخمين حقيقة.
+4. احتفظ بالتوقيتات عندما تكون مفيدة.
+5. النص الموجود في OCR هو دليل بصري وقد يحتوي أخطاء.
+6. إذا تعارض OCR مع الكلام، اذكر عدم اليقين بدلاً من اختراع رقم.
+7. استخرج القوانين والأمثلة والأرقام الظاهرة فقط عندما تكون مدعومة بالأدلة.
+
+أنشئ ملخصاً منظماً يشمل:
+- ملخص الدرس
+- أهم الأفكار
+- القوانين والصيغ
+- الأمثلة الرياضية
+- الأرقام أو المعادلات الظاهرة على الشاشة
+- التوقيتات المهمة
+- أي ملاحظات أو أخطاء واضحة
+
+========== TRANSCRIPT ==========
+{transcript_text}
+
+========== TIMELINE + VISUAL EVIDENCE ==========
+{timeline_text}
+
+========== END OF EVIDENCE ==========
+"""
 
         answer = await asyncio.to_thread(
             ask_gemini,
@@ -3044,10 +3116,20 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
             persistent_memory.get_all(user_id)
         )
 
+        # نحفظ Evidence مختصراً حتى يستطيع الوكيل استخدام سياق الفيديو
+        memory_text = (
+            "[VIDEO EVIDENCE]\n"
+            f"Video: {video_path}\n\n"
+            "Transcript:\n"
+            f"{transcript_text}\n\n"
+            "Timeline / Visual Evidence:\n"
+            f"{timeline_text}"
+        )
+
         conversation_memory.add(
             user_id,
             "user",
-            "[محاضرة فيديو]\n" + transcript
+            memory_text
         )
 
         conversation_memory.add(
@@ -3065,9 +3147,8 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         traceback.print_exc()
 
         await update.message.reply_text(
-            f"❌ حدث خطأ أثناء معالجة الفيديو:\n{e}"
+            f"❌ حدث خطأ أثناء معالجة الفيديو:\\n{e}"
         )
-
 
 # ============================================================
 # ERROR HANDLER

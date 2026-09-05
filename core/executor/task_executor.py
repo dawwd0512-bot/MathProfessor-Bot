@@ -447,6 +447,8 @@ VERDICT: FAIL
                         "ارسم بيانياً",
                         "ارسم بيانيًا",
                         "ارسم بيانيا",
+                        "ارسم الدالتين",
+                        "ارسم الدوال",
                         "ارسم الدالة",
                         "الرسم البياني",
                         "رسم بياني",
@@ -516,10 +518,52 @@ VERDICT: FAIL
                     )
 
 
-                    graph_path = generate_function_graph(
-                        graph_input,
-                        "telegram_graph.svg"
-                    )
+                    # ------------------------------------------------
+                    # Step 4 integration:
+                    # single function -> existing renderer
+                    # multiple functions -> multi-function renderer
+                    # ------------------------------------------------
+                    graph_parts = [
+                        part.strip()
+                        for part in re.split(
+                            r"\s*,\s*|\s+و\s+|،",
+                            graph_input
+                        )
+                        if part.strip()
+                    ]
+
+                    # Normalize each function separately.
+                    # Example:
+                    #   x**2 - 4 و y = x + 2
+                    # becomes:
+                    #   x**2 - 4
+                    #   x + 2
+                    normalized_parts = []
+
+                    for part in graph_parts:
+                        if "=" in part:
+                            left, right = part.split("=", 1)
+                            if left.strip().lower() == "y":
+                                part = right.strip()
+
+                        normalized_parts.append(part.strip())
+
+                    graph_parts = normalized_parts
+
+                    if len(graph_parts) > 1:
+                        from core.multi_graph_renderer import (
+                            generate_multi_function_graph
+                        )
+
+                        graph_path = generate_multi_function_graph(
+                            graph_parts,
+                            "telegram_multi_graph.svg"
+                        )
+                    else:
+                        graph_path = generate_function_graph(
+                            graph_input,
+                            "telegram_graph.svg"
+                        )
 
                     results.append({
                         "success": True,

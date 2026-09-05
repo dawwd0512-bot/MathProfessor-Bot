@@ -113,3 +113,93 @@ def read_video(file_path):
             f"[لقطة الفيديو {i}]\n{text}"
             for i, text in enumerate(unique, 1)
         )
+
+
+def extract_video_frames(file_path, output_dir, max_frames=None):
+    """
+    استخراج لقطات موزعة على كامل الفيديو مع توقيت كل لقطة.
+    """
+
+    if not os.path.isfile(file_path):
+        return []
+
+    if shutil.which("ffmpeg") is None:
+        print("VIDEO ERROR: ffmpeg not installed")
+        return []
+
+    duration = _video_duration(file_path)
+
+    if duration <= 0:
+        return []
+
+    if max_frames is None:
+        if duration <= 30:
+            max_frames = 5
+        elif duration <= 120:
+            max_frames = 8
+        elif duration <= 600:
+            max_frames = 12
+        else:
+            max_frames = 15
+
+    max_frames = max(1, int(max_frames))
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_pattern = output_dir / "frame-%03d.jpg"
+
+    try:
+        result = subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel", "error",
+                "-i", file_path,
+                "-vf",
+                (
+                    f"fps={max_frames}/{max(duration, 1):.6f},"
+                    "scale='min(1600,iw)':-2"
+                ),
+                "-q:v", "2",
+                "-y",
+                str(output_pattern),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+        if result.returncode != 0:
+            print(
+                "VIDEO FRAME ERROR:",
+                result.stderr.strip(),
+            )
+            return []
+
+    except Exception as e:
+        print(
+            "VIDEO FRAME EXTRACTION ERROR:",
+            repr(e),
+        )
+        return []
+
+    files = sorted(output_dir.glob("frame-*.jpg"))
+
+    frames = []
+
+    for index, frame_path in enumerate(files):
+        timestamp = min(
+            index * duration / max_frames,
+            max(duration - 0.1, 0),
+        )
+
+        if frame_path.is_file() and frame_path.stat().st_size > 0:
+            frames.append(
+                {
+                    "path": str(frame_path),
+                    "timestamp": round(timestamp, 2),
+                }
+            )
+
+    return frames

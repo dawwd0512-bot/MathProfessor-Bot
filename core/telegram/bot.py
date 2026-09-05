@@ -16,6 +16,7 @@ from core.agent_v2 import AgentV2
 from phone_agent.commands import execute as execute_phone_command
 from core.config import Config
 from core.files.storage import save_file
+from core.files.video_evidence import build_video_evidence
 from core.knowledge.retrieval.document_reader import DocumentReader
 from core.vision.image import analyze_image
 from core.voice.tts import text_to_speech
@@ -129,6 +130,184 @@ class TelegramBot:
                 + str(e)
             )
 
+
+
+    async def handle_video(self, update, context):
+        try:
+            user_id = str(update.effective_user.id)
+
+            await update.message.reply_text(
+                "🎬 تم استلام الفيديو.\n"
+                "⏳ جاري استخراج الصوت واللقطات وبناء فهم الفيديو..."
+            )
+
+            video = update.message.video
+
+            media_dir = (
+                Path("data/uploads")
+                / user_id
+                / "video"
+            )
+            media_dir.mkdir(parents=True, exist_ok=True)
+
+            video_path = (
+                media_dir
+                / f"{video.file_unique_id}.mp4"
+            )
+
+            await (await video.get_file()).download_to_drive(
+                custom_path=str(video_path),
+                read_timeout=600,
+                write_timeout=600,
+                connect_timeout=60,
+                pool_timeout=600,
+            )
+
+            wav_path = media_dir / f"{video.file_unique_id}.wav"
+
+            await asyncio.to_thread(
+                subprocess.run,
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i", str(video_path),
+                    "-vn",
+                    "-ar", "16000",
+                    "-ac", "1",
+                    str(wav_path),
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+            )
+
+            evidence_dir = (
+                media_dir
+                / f"{video.file_unique_id}_evidence"
+            )
+
+            evidence = await asyncio.to_thread(
+                build_video_evidence,
+                str(video_path),
+                str(wav_path),
+                str(evidence_dir),
+                12,
+            )
+
+            transcript = evidence.get("transcript", [])
+            timeline = evidence.get("timeline", [])
+
+            if not transcript and not timeline:
+                await update.message.reply_text(
+                    "❌ لم أستطع استخراج معلومات مفيدة من الفيديو."
+                )
+                return
+
+            transcript_text = "\n".join(
+                f"[{float(item['start']):.2f}s → "
+                f"{float(item['end']):.2f}s] "
+                f"{item.get('text', '')}"
+                for item in transcript
+            )
+
+            timeline_text_parts = []
+
+            for item in timeline:
+                lines = [
+                    f"[{float(item['start']):.2f}s → "
+                    f"{float(item['end']):.2f}s]",
+                    f"الكلام: {item.get('text', '')}",
+                ]
+
+                for visual in item.get("visuals", []):
+                    screen_text = (
+                        visual.get("screen_text") or ""
+                    ).strip()
+
+                    lines.append(
+                        f"لقطة عند "
+                        f"{float(visual['timestamp']):.2f}s"
+                    )
+
+                    if screen_text:
+                        lines.append(
+                            f"النص الظاهر: {screen_text}"
+                        )
+
+                timeline_text_parts.append(
+                    "\n".join(lines)
+                )
+
+            timeline_text = "\n\n".join(
+                timeline_text_parts
+            )
+
+            caption = update.message.caption or ""
+
+            prompt = f"""
+أنت محلل فيديو رياضي/تعليمي يعتمد فقط على الأدلة المستخرجة من الفيديو.
+
+مهم جدًا:
+- لا تخترع أي معلومة غير موجودة في الأدلة.
+- إذا لم توجد الإجابة في الفيديو، قل بوضوح:
+  "هذه المعلومة غير موجودة في الفيديو."
+- استخدم التوقيتات عند الإجابة عن أسئلة "متى؟".
+- فرّق بين الكلام المنطوق والنص الظاهر على الشاشة.
+- إذا كان السؤال عن مسألة رياضية، استخدم الأرقام والمعادلات الظاهرة أو المنطوقة فقط.
+- لا تفترض أرقامًا غير موجودة.
+- إذا كانت الأدلة غير كافية، صرّح بذلك بدل التخمين.
+
+طلب المستخدم:
+{caption or "لخص الفيديو واذكر أهم القوانين والأمثلة."}
+
+TRANSCRIPT:
+{transcript_text}
+
+TIMELINE / VISUAL EVIDENCE:
+{timeline_text}
+"""
+
+            await update.message.reply_text(
+                "🧠 تم استخراج الأدلة من الفيديو.\n"
+                "🔎 جاري تحليلها..."
+            )
+
+            response = await asyncio.to_thread(
+                self.agent.chat,
+                prompt,
+                user_id=user_id,
+                file_context=None
+            )
+
+            if isinstance(response, dict):
+                text = response.get(
+                    "response",
+                    response
+                )
+
+                if isinstance(text, dict):
+                    results = text.get(
+                        "results",
+                        []
+                    )
+
+                    if results:
+                        text = results[-1].get(
+                            "output",
+                            results[-1]
+                        )
+            else:
+                text = response
+
+            await update.message.reply_text(
+                str(text)
+            )
+
+        except Exception as e:
+            print("VIDEO ERROR:", repr(e))
+            await update.message.reply_text(
+                f"❌ حدث خطأ أثناء معالجة الفيديو:\n{e}"
+            )
 
 
     async def handle_photo(self, update, context):
@@ -602,6 +781,14 @@ class TelegramBot:
             CommandHandler(
                 "start",
                 self.start_command
+            )
+        )
+
+        # الفيديو
+        app.add_handler(
+            MessageHandler(
+                filters.VIDEO,
+                self.handle_video
             )
         )
 
